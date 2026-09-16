@@ -1,0 +1,67 @@
+name: Adicionar construção
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add-construction:
+    if: contains(github.event.issue.labels.*.name, 'construcao')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Parsear XML e gerar construção
+        id: parse
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: node scripts/parse-construction.js
+
+      - name: Recompilar script completo
+        if: success()
+        run: node scripts/build-script.js
+
+      - name: Commitar alterações
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add constructions/ script-completo.lua
+          git commit -m "Nova construção via issue #${{ github.event.issue.number }}" || echo "Nada para commitar"
+          git push
+
+      - name: Comentar e fechar a issue (sucesso)
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: "✅ Construção adicionada com sucesso! Ela já deve aparecer na galeria do site em alguns instantes."
+            });
+            await github.rest.issues.update({
+              ...context.repo,
+              issue_number: context.issue.number,
+              state: "closed"
+            });
+
+      - name: Comentar erro (falha)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: "❌ Não consegui processar essa construção. Confira se o XML foi colado corretamente pelo formulário do site e tente enviar de novo."
+            });
