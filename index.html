@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enviar construção</title>
+<style>
+  body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; background:#111; color:#eee; }
+  h1 { font-size: 22px; }
+  label { display:block; margin-top: 16px; margin-bottom: 4px; font-weight: bold; }
+  input, textarea { width: 100%; box-sizing: border-box; padding: 8px; background:#1c1c1c; color:#eee; border:1px solid #444; border-radius:4px; font-family: inherit; }
+  textarea { resize: vertical; }
+  button { margin-top: 20px; padding: 10px 20px; background:#2e7d32; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:15px; }
+  button:hover { background:#388e3c; }
+  a { color:#7fc8ff; }
+  .aviso { background:#222; border:1px solid #444; padding:10px; border-radius:4px; margin-top:20px; font-size:13px; color:#bbb; }
+  nav { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<nav><a href="galeria.html">Ver construções já enviadas →</a></nav>
+
+<h1>Enviar nova construção</h1>
+<p>1. Monte a construção no <a href="https://entibo.github.io/miceditor" target="_blank">miceditor</a> e copie o XML do mapa (menu de exportar/copiar XML).</p>
+<p>2. Preencha os campos abaixo e clique em enviar — isso vai abrir uma página do GitHub pra você confirmar (é necessário ter uma conta no GitHub, gratuita).</p>
+
+<label for="nick">Seu nick</label>
+<input id="nick" placeholder="Como você quer aparecer">
+
+<label for="nome">Nome da construção</label>
+<input id="nome" placeholder="Ex: Casa de madeira">
+
+<label for="descricao">Descrição</label>
+<textarea id="descricao" rows="3" placeholder="Uma breve descrição da construção"></textarea>
+
+<label for="xml">XML da construção</label>
+<textarea id="xml" rows="10" placeholder="Cole aqui o XML exportado do miceditor"></textarea>
+
+<button onclick="enviar()">Enviar construção</button>
+
+<div class="aviso">
+  Observação: o campo "nick" é só uma identificação simples, não é uma conta de verdade — qualquer pessoa
+  pode digitar qualquer nome ali. A validação real de quem enviou é feita pela sua conta do GitHub, que fica
+  registrada automaticamente quando você confirma o envio.
+</div>
+
+<script>
+  // troque pelo caminho do seu repositório, ex: "joaosilva/construcoes-tfm"
+  const REPO = "SEU_USUARIO/SEU_REPO";
+
+  // "login" básico: lembra o nick no navegador
+  document.getElementById('nick').value = localStorage.getItem('nick') || '';
+
+  function enviar() {
+    const nick = document.getElementById('nick').value.trim() || 'Anônimo';
+    const nome = document.getElementById('nome').value.trim() || 'Sem nome';
+    const descricao = document.getElementById('descricao').value.trim() || '(sem descrição)';
+    const xml = document.getElementById('xml').value.trim();
+
+    if (!xml) {
+      alert('Cole o XML da construção antes de enviar!');
+      return;
+    }
+
+    localStorage.setItem('nick', nick);
+
+    const title = encodeURIComponent('Construção: ' + nome);
+    const body = encodeURIComponent(
+      `### Autor\n${nick}\n\n### Descrição\n${descricao}\n\n### XML\n\`\`\`xml\n${xml}\n\`\`\``
+    );
+
+    const url = `https://github.com/${REPO}/issues/new?title=${title}&body=${body}&labels=construcao`;
+    window.open(url, '_blank');
+  }
+</script>
+
+</body>
+</html>
